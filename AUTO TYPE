@@ -3,21 +3,21 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "AutoTypeGUI"
 gui.ResetOnSpawn = false
 
--- Frame setup
+-- Sky-blue draggable frame
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 320, 0, 180)
 frame.Position = UDim2.new(0.5, -160, 0.5, -90)
-frame.BackgroundColor3 = Color3.fromRGB(135, 206, 235) -- sky color
+frame.BackgroundColor3 = Color3.fromRGB(135, 206, 235)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = gui
 
--- Input box
+-- Input text box
 local inputBox = Instance.new("TextBox")
 inputBox.Size = UDim2.new(1, -20, 0, 40)
 inputBox.Position = UDim2.new(0, 10, 0, 10)
-inputBox.PlaceholderText = "Type or paste text here"
+inputBox.PlaceholderText = "Enter message to auto-type"
 inputBox.Text = ""
 inputBox.TextScaled = true
 inputBox.ClearTextOnFocus = false
@@ -25,7 +25,7 @@ inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 inputBox.TextColor3 = Color3.fromRGB(0, 0, 0)
 inputBox.Parent = frame
 
--- Output label
+-- Output text label
 local output = Instance.new("TextLabel")
 output.Size = UDim2.new(1, -20, 0, 60)
 output.Position = UDim2.new(0, 10, 0, 60)
@@ -46,6 +46,21 @@ button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Parent = frame
 
+-- Typing sound
+local typingSound = Instance.new("Sound")
+typingSound.SoundId = "rbxassetid://9118823104" -- quiet typewriter sound
+typingSound.Volume = 0.2
+typingSound.Parent = frame
+
 -- Typing function
 local function typeText(text, wpm)
-	local charsP
+	local charsPerSecond = (wpm * 5) / 60
+	local delayTime = 1 / charsPerSecond
+	output.Text = ""
+	for i = 1, #text do
+		local char = text:sub(i, i)
+		output.Text = output.Text .. char
+		if typingSound.IsLoaded then
+			typingSound:Play()
+		end
+		task.wait(d
