@@ -1,0 +1,51 @@
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "AutoTypeGUI"
+gui.ResetOnSpawn = false
+
+-- Frame setup
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 320, 0, 180)
+frame.Position = UDim2.new(0.5, -160, 0.5, -90)
+frame.BackgroundColor3 = Color3.fromRGB(135, 206, 235) -- sky color
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Parent = gui
+
+-- Input box
+local inputBox = Instance.new("TextBox")
+inputBox.Size = UDim2.new(1, -20, 0, 40)
+inputBox.Position = UDim2.new(0, 10, 0, 10)
+inputBox.PlaceholderText = "Type or paste text here"
+inputBox.Text = ""
+inputBox.TextScaled = true
+inputBox.ClearTextOnFocus = false
+inputBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+inputBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+inputBox.Parent = frame
+
+-- Output label
+local output = Instance.new("TextLabel")
+output.Size = UDim2.new(1, -20, 0, 60)
+output.Position = UDim2.new(0, 10, 0, 60)
+output.Text = ""
+output.TextWrapped = true
+output.TextScaled = true
+output.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+output.TextColor3 = Color3.fromRGB(0, 0, 0)
+output.Parent = frame
+
+-- Start button
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -20, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 130)
+button.Text = "Start Typing"
+button.TextScaled = true
+button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = frame
+
+-- Typing function
+local function typeText(text, wpm)
+	local charsP
