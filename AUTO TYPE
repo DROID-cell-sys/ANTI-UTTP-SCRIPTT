@@ -1,12 +1,11 @@
--- KRNL Auto Typer GUI Script - Mobile Friendly with Sky Background Image
-
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local VirtualInputManager = game:GetService("VirtualInputManager") -- Delta input simulation
 
 -- Create ScreenGui
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "KRNLAutoTyperGui"
+screenGui.Name = "AntiUttpAutoTyperGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = game.CoreGui
 
@@ -17,6 +16,24 @@ mainFrame.Position = UDim2.new(0.5, -175, 0.5, -90)
 mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.BackgroundTransparency = 1 -- transparent because of image background
 mainFrame.Parent = screenGui
+
+-- Add rounded corners and glowing red outline to mainFrame
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 18)
+corner.Parent = mainFrame
+
+local glow = Instance.new("ImageLabel")
+glow.Name = "GlowOutline"
+glow.Size = UDim2.new(1, 30, 1, 30)
+glow.Position = UDim2.new(0, -15, 0, -15)
+glow.BackgroundTransparency = 1
+glow.Image = "rbxassetid://3570695787" -- circular image for glow outline
+glow.ImageColor3 = Color3.fromRGB(255, 0, 0)
+glow.ImageTransparency = 0.7
+glow.ScaleType = Enum.ScaleType.Slice
+glow.SliceCenter = Rect.new(10, 10, 246, 246)
+glow.ZIndex = 0
+glow.Parent = mainFrame
 
 -- UIScale for mobile responsiveness
 local uiScale = Instance.new("UIScale")
@@ -33,32 +50,64 @@ bgImage.ScaleType = Enum.ScaleType.Crop
 bgImage.ZIndex = 0
 bgImage.Parent = mainFrame
 
--- Container Frame to hold UI elements with slight background for readability
+-- Container Frame to hold UI elements with NO background color for full background visibility
 local container = Instance.new("Frame")
 container.Size = UDim2.new(1, -20, 1, -20)
 container.Position = UDim2.new(0, 10, 0, 10)
-container.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-container.BackgroundTransparency = 0.4
+container.BackgroundTransparency = 1 -- fully transparent
 container.BorderSizePixel = 0
 container.ZIndex = 1
 container.Parent = mainFrame
 
--- Title Label
+-- Function to create subtle text shadow
+local function createTextShadow(parent, textLabel)
+    local shadow = Instance.new("TextLabel")
+    shadow.Name = "Shadow"
+    shadow.Text = textLabel.Text
+    shadow.Font = textLabel.Font
+    shadow.TextSize = textLabel.TextSize
+    shadow.TextColor3 = Color3.new(0,0,0)
+    shadow.BackgroundTransparency = 1
+    shadow.Size = textLabel.Size
+    shadow.Position = UDim2.new(0, 1, 0, 1) -- offset for shadow
+    shadow.ZIndex = textLabel.ZIndex - 1
+    shadow.TextTransparency = 0.5
+    shadow.TextWrapped = textLabel.TextWrapped
+    shadow.TextXAlignment = textLabel.TextXAlignment
+    shadow.Parent = parent
+    return shadow
+end
+
+-- Title Label with shadow (updated text)
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, 0, 0, 40)
 titleLabel.Position = UDim2.new(0, 0, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Auto Typer"
+titleLabel.Text = "Anti-uttp auto typer"
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextSize = 28
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.ZIndex = 2
 titleLabel.Parent = container
+createTextShadow(container, titleLabel)
 
--- TextBox for input text
+-- Subtitle Label with shadow (new "Made with vondy ai")
+local subtitleLabel = Instance.new("TextLabel")
+subtitleLabel.Size = UDim2.new(1, 0, 0, 20)
+subtitleLabel.Position = UDim2.new(0, 0, 0, 38)
+subtitleLabel.BackgroundTransparency = 1
+subtitleLabel.Text = "Made with vondy ai"
+subtitleLabel.Font = Enum.Font.Gotham
+subtitleLabel.TextSize = 16
+subtitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+subtitleLabel.ZIndex = 2
+subtitleLabel.Parent = container
+createTextShadow(container, subtitleLabel)
+
+-- TextBox for input text (no shadow needed)
 local inputBox = Instance.new("TextBox")
 inputBox.Size = UDim2.new(0.9, 0, 0, 60)
-inputBox.Position = UDim2.new(0.05, 0, 0, 50)
+inputBox.Position = UDim2.new(0.05, 0, 0, 60)
 inputBox.PlaceholderText = "Put your text here"
 inputBox.ClearTextOnFocus = false
 inputBox.TextWrapped = true
@@ -70,10 +119,10 @@ inputBox.TextColor3 = Color3.fromRGB(0, 0, 0)
 inputBox.ZIndex = 2
 inputBox.Parent = container
 
--- Speed Label
+-- Speed Label with shadow
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0, 150, 0, 25)
-speedLabel.Position = UDim2.new(0.05, 0, 0, 120)
+speedLabel.Position = UDim2.new(0.05, 0, 0, 130)
 speedLabel.BackgroundTransparency = 1
 speedLabel.Text = "Speed: 100 WPM"
 speedLabel.Font = Enum.Font.Gotham
@@ -82,40 +131,65 @@ speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.ZIndex = 2
 speedLabel.Parent = container
+createTextShadow(container, speedLabel)
 
--- Speed Slider Frame
+-- Speed Slider Frame (keep semi-transparent white background for visibility)
 local sliderFrame = Instance.new("Frame")
 sliderFrame.Size = UDim2.new(0.7, 0, 0, 30)
-sliderFrame.Position = UDim2.new(0.3, 0, 0, 120)
+sliderFrame.Position = UDim2.new(0.3, 0, 0, 130)
 sliderFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 sliderFrame.BackgroundTransparency = 0.3
 sliderFrame.BorderSizePixel = 0
 sliderFrame.ZIndex = 2
 sliderFrame.Parent = container
 
--- Slider Fill
+-- Rounded corners on slider frame
+local sliderCorner = Instance.new("UICorner")
+sliderCorner.CornerRadius = UDim.new(0, 15)
+sliderCorner.Parent = sliderFrame
+
+-- Slider Fill with glowing red effect
 local sliderFill = Instance.new("Frame")
 sliderFill.Size = UDim2.new(0.3, 0, 1, 0)
-sliderFill.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+sliderFill.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 sliderFill.ZIndex = 3
 sliderFill.Parent = sliderFrame
 
--- Slider Button
+local sliderFillGlow = Instance.new("UIStroke")
+sliderFillGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+sliderFillGlow.Color = Color3.fromRGB(255, 0, 0)
+sliderFillGlow.Thickness = 3
+sliderFillGlow.Transparency = 0.6
+sliderFillGlow.Parent = sliderFill
+
+-- Slider Button (circle) with glowing red effect
 local sliderButton = Instance.new("ImageButton")
 sliderButton.Size = UDim2.new(0, 30, 1, 0)
 sliderButton.Position = UDim2.new(0.3, -15, 0, 0)
-sliderButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-sliderButton.BackgroundTransparency = 0.8
-sliderButton.Image = "rbxassetid://3570695787"
+sliderButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+sliderButton.BackgroundTransparency = 0
+sliderButton.Image = ""
 sliderButton.ZIndex = 4
 sliderButton.Parent = sliderFrame
 sliderButton.Active = true
 sliderButton.Selectable = true
+sliderButton.AutoButtonColor = false
 
--- Auto Type Button
+local sliderButtonCorner = Instance.new("UICorner")
+sliderButtonCorner.CornerRadius = UDim.new(1, 0)
+sliderButtonCorner.Parent = sliderButton
+
+local sliderButtonGlow = Instance.new("UIStroke")
+sliderButtonGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+sliderButtonGlow.Color = Color3.fromRGB(255, 0, 0)
+sliderButtonGlow.Thickness = 3
+sliderButtonGlow.Transparency = 0.5
+sliderButtonGlow.Parent = sliderButton
+
+-- Auto Type Button with shadow and rounded corners
 local autoTypeButton = Instance.new("TextButton")
 autoTypeButton.Size = UDim2.new(0.9, 0, 0, 50)
-autoTypeButton.Position = UDim2.new(0.05, 0, 0, 165)
+autoTypeButton.Position = UDim2.new(0.05, 0, 0, 180)
 autoTypeButton.BackgroundColor3 = Color3.fromRGB(65, 105, 225)
 autoTypeButton.Font = Enum.Font.GothamBold
 autoTypeButton.TextSize = 24
@@ -123,6 +197,12 @@ autoTypeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 autoTypeButton.Text = "Auto Type"
 autoTypeButton.ZIndex = 2
 autoTypeButton.Parent = container
+
+local autoTypeButtonCorner = Instance.new("UICorner")
+autoTypeButtonCorner.CornerRadius = UDim.new(0, 12)
+autoTypeButtonCorner.Parent = autoTypeButton
+
+createTextShadow(container, autoTypeButton)
 
 -- Variables
 local minSpeed = 1
@@ -132,14 +212,20 @@ local currentSpeed = 100
 local function updateSpeed(newSpeed)
     currentSpeed = math.clamp(newSpeed, minSpeed, maxSpeed)
     speedLabel.Text = "Speed: "..math.floor(currentSpeed).." WPM"
+    if speedLabel:FindFirstChild("Shadow") then
+        speedLabel.Shadow.Text = speedLabel.Text
+    end
     local fillPercent = (currentSpeed - minSpeed) / (maxSpeed - minSpeed)
-    sliderFill.Size = UDim2.new(fillPercent, 0, 1, 0)
-    sliderButton.Position = UDim2.new(fillPercent, -15, 0, 0)
+    
+    -- Animate slider fill smoothly
+    TweenService:Create(sliderFill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(fillPercent, 0, 1, 0)}):Play()
+    -- Animate slider button smoothly
+    TweenService:Create(sliderButton, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(fillPercent, -15, 0, 0)}):Play()
 end
 
 updateSpeed(currentSpeed)
 
--- Slider drag handling (mouse + touch)
+-- Slider drag handling (mouse + touch) with smooth animation
 local dragging = false
 
 sliderButton.InputBegan:Connect(function(input)
@@ -209,55 +295,101 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Button press animation
-local function animateButton()
-    local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out)
-    local tweenSmall = TweenService:Create(autoTypeButton, tweenInfo, {Size = UDim2.new(0.85, 0, 0, 50)})
-    local tweenBig = TweenService:Create(autoTypeButton, tweenInfo, {Size = UDim2.new(0.9, 0, 0, 50)})
+-- Small toggle button with the sky image, draggable, with glowing red outline
+local toggleButton = Instance.new("ImageButton")
+toggleButton.Size = UDim2.new(0, 60, 0, 60)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.AnchorPoint = Vector2.new(0, 0)
+toggleButton.BackgroundTransparency = 1
+toggleButton.Image = "rbxassetid://14228213084"  -- same sky image
+toggleButton.Parent = screenGui
+toggleButton.ZIndex = 10
+toggleButton.AutoButtonColor = false
 
-    tweenSmall:Play()
-    tweenSmall.Completed:Wait()
-    tweenBig:Play()
+-- Add glowing red outline to toggleButton
+local toggleGlow = Instance.new("ImageLabel")
+toggleGlow.Name = "GlowOutline"
+toggleGlow.Size = UDim2.new(1, 30, 1, 30)
+toggleGlow.Position = UDim2.new(0, -15, 0, -15)
+toggleGlow.BackgroundTransparency = 1
+toggleGlow.Image = "rbxassetid://3570695787" -- circular glow image
+toggleGlow.ImageColor3 = Color3.fromRGB(255, 0, 0)
+toggleGlow.ImageTransparency = 0.7
+toggleGlow.ScaleType = Enum.ScaleType.Slice
+toggleGlow.SliceCenter = Rect.new(10, 10, 246, 246)
+toggleGlow.ZIndex = 9
+toggleGlow.Parent = toggleButton
+
+-- Make toggleButton draggable
+local draggingToggle = false
+local dragToggleInput, dragToggleStart, toggleStartPos
+
+local function updateToggleInput(input)
+    local delta = input.Position - dragToggleStart
+    local newX = toggleStartPos.X.Offset + delta.X
+    local newY = toggleStartPos.Y.Offset + delta.Y
+
+    local maxX = workspace.CurrentCamera.ViewportSize.X - toggleButton.AbsoluteSize.X
+    local maxY = workspace.CurrentCamera.ViewportSize.Y - toggleButton.AbsoluteSize.Y
+    newX = math.clamp(newX, 0, maxX)
+    newY = math.clamp(newY, 0, maxY)
+
+    toggleButton.Position = UDim2.new(0, newX, 0, newY)
 end
 
--- Typing function using KRNL keypress and clipboard fallback
-local function autoType(text, wpm)
-    local cps = (wpm * 6) / 60
-    local delay = 1 / cps
+toggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        draggingToggle = true
+        dragToggleStart = input.Position
+        toggleStartPos = toggleButton.Position
 
-    for i = 1, #text do
-        local char = text:sub(i, i)
-        local upperChar = char:upper()
-        local keyCode = Enum.KeyCode[upperChar]
-
-        if keyCode and #char == 1 and char:match("%a") then
-            -- Letter keys
-            pcall(function()
-                keypress(keyCode)
-                wait(0.01)
-                keyrelease(keyCode)
-            end)
-        else
-            -- For other characters, use clipboard paste fallback
-            pcall(function()
-                setclipboard(char)
-                keypress(Enum.KeyCode.LeftControl)
-                keypress(Enum.KeyCode.V)
-                wait(0.01)
-                keyrelease(Enum.KeyCode.V)
-                keyrelease(Enum.KeyCode.LeftControl)
-            end)
-        end
-        wait(delay)
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                draggingToggle = false
+            end
+        end)
     end
+end)
+
+toggleButton.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragToggleInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingToggle and input == dragToggleInput then
+        updateToggleInput(input)
+    end
+end)
+
+local guiVisible = true
+
+local toggleTweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+
+local function hideGui()
+    local tweenSize = TweenService:Create(mainFrame, toggleTweenInfo, {Size = UDim2.new(0, 0, 0, 0)})
+    local tweenPos = TweenService:Create(mainFrame, toggleTweenInfo, {Position = toggleButton.Position})
+    local tweenTransparency = TweenService:Create(container, toggleTweenInfo, {BackgroundTransparency = 1})
+    local tweenTitleTransparency = TweenService:Create(titleLabel, toggleTweenInfo, {TextTransparency = 1})
+    local tweenSubtitleTransparency = TweenService:Create(subtitleLabel, toggleTweenInfo, {TextTransparency = 1})
+    local tweenInputTransparency = TweenService:Create(inputBox, toggleTweenInfo, {TextTransparency = 1, BackgroundTransparency = 1})
+    local tweenSpeedTransparency = TweenService:Create(speedLabel, toggleTweenInfo, {TextTransparency = 1})
+    local tweenSliderTransparency = TweenService:Create(sliderFrame, toggleTweenInfo, {BackgroundTransparency = 1})
+    local tweenButtonTransparency = TweenService:Create(autoTypeButton, toggleTweenInfo, {BackgroundTransparency = 1, TextTransparency = 1})
+
+    tweenSize:Play()
+    tweenPos:Play()
+    tweenTransparency:Play()
+    tweenTitleTransparency:Play()
+    tweenSubtitleTransparency:Play()
+    tweenInputTransparency:Play()
+    tweenSpeedTransparency:Play()
+    tweenSliderTransparency:Play()
+    tweenButtonTransparency:Play()
+
+    tweenSize.Completed:Wait()
+    mainFrame.Visible = false
 end
 
-autoTypeButton.MouseButton1Click:Connect(function()
-    local textToType = inputBox.Text
-    if textToType == "" then return end
-
-    animateButton()
-    coroutine.wrap(function()
-        autoType(textToType, currentSpeed)
-    end)()
-end)
+local function
