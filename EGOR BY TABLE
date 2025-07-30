@@ -1,0 +1,174 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local slowGravityOn = false
+local isRagdoll = false
+local bodyForce
+
+-- Create GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FE_GravityRagdollThrowGui"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local function createButton(text, posY)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 150, 0, 50)
+    btn.Position = UDim2.new(0, 20, 0, posY)
+    btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 24
+    btn.Text = text
+    btn.Parent = screenGui
+    return btn
+end
+
+local gravityButton = createButton("Slow Gravity: OFF", 20)
+local ragdollButton = createButton("Ragdoll", 80)
+local throwButton = createButton("Throw", 140)
+
+throwButton.AutoButtonColor = false
+throwButton.BackgroundTransparency = 0.5
+throwButton.TextTransparency = 0.5
+throwButton.Active = false -- disabled initially
+
+-- Slow gravity effect with BodyForce
+local function enableSlowGravity(character)
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    bodyForce = Instance.new("BodyForce")
+    bodyForce.Force = Vector3.new(0, hrp:GetMass() * 130, 0)
+    bodyForce.Parent = hrp
+end
+
+local function disableSlowGravity()
+    if bodyForce and bodyForce.Parent then
+        bodyForce:Destroy()
+        bodyForce = nil
+    end
+end
+
+gravityButton.MouseButton1Click:Connect(function()
+    slowGravityOn = not slowGravityOn
+    local char = player.Character
+    if slowGravityOn then
+        gravityButton.Text = "Slow Gravity: ON"
+        if char then enableSlowGravity(char) end
+    else
+        gravityButton.Text = "Slow Gravity: OFF"
+        disableSlowGravity()
+    end
+end)
+
+-- Ragdoll function
+local function ragdoll()
+    local char = player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hum or isRagdoll then return end
+
+    isRagdoll = true
+    hum.PlatformStand = true
+
+    for _, joint in pairs(char:GetChildren()) do
+        if joint:IsA("Motor6D") then
+            local part0 = joint.Part0
+            local part1 = joint.Part1
+            if part0 and part1 then
+                local att0 = Instance.new("Attachment", part0)
+                local att1 = Instance.new("Attachment", part1)
+                att0.Name = "RagdollAttachment0"
+                att1.Name = "RagdollAttachment1"
+                att0.Position = joint.C0.Position
+                att1.Position = joint.C1.Position
+
+                local ballSocket = Instance.new("BallSocketConstraint")
+                ballSocket.Name = "RagdollConstraint"
+                ballSocket.Attachment0 = att0
+                ballSocket.Attachment1 = att1
+                ballSocket.Parent = char
+
+                joint:Destroy()
+            end
+        end
+    end
+
+    throwButton.Active = true
+    throwButton.BackgroundTransparency = 0
+    throwButton.TextTransparency = 0
+end
+
+ragdollButton.MouseButton1Click:Connect(ragdoll)
+
+-- Throw function with gentle slower throw if slow gravity is ON, plus spinning fling and upward lift to avoid legs clipping
+local function throwForward()
+    if not isRagdoll then return end
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local bodyVelocity = Instance.new("BodyVelocity")
+    local throwSpeed
+
+    if slowGravityOn then
+        throwSpeed = 50
+    else
+        throwSpeed = 80
+    end
+
+    local throwDirection = (hrp.CFrame.LookVector * throwSpeed) + Vector3.new(0, 15, 0)
+    bodyVelocity.Velocity = throwDirection
+    bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bodyVelocity.P = 1e5
+    bodyVelocity.Parent = hrp
+
+    game.Debris:AddItem(bodyVelocity, 0.3)
+
+    local bodyAngularVelocity = Instance.new("BodyAngularVelocity")
+    bodyAngularVelocity.AngularVelocity = Vector3.new(0, 10, 0)
+    bodyAngularVelocity.MaxTorque = Vector3.new(0, 1e5, 0)
+    bodyAngularVelocity.P = 1e4
+    bodyAngularVelocity.Parent = hrp
+
+    game.Debris:AddItem(bodyAngularVelocity, 0.6)
+end
+
+throwButton.MouseButton1Click:Connect(throwForward)
+
+-- Reset function to clear states and GUI
+local function resetState()
+    slowGravityOn = false
+    isRagdoll = false
+    gravityButton.Text = "Slow Gravity: OFF"
+    throwButton.Active = false
+    throwButton.BackgroundTransparency = 0.5
+    throwButton.TextTransparency = 0.5
+    disableSlowGravity()
+
+    local char = player.Character
+    if char then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.PlatformStand = false
+        end
+    end
+end
+
+-- Listen for character added and connect death event
+local function onCharacterAdded(char)
+    resetState()
+    local hum = char:WaitForChild("Humanoid")
+
+    hum.Died:Connect(function()
+        resetState()
+    end)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+-- If character already exists when script runs
+if player.Character then
+    onCharacterAdded(player.Character)
+end
